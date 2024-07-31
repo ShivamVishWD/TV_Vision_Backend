@@ -1,12 +1,27 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const app = express();
+
+// const server = http.createServer(app);
+// const {Server} = require('socket.io');
+// const io = new Server(server);
+// const EventEmitter = require('events');
+
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 require('./configs/mongodb');
 
 const port = process.env.PORT || 5001;
+
+// io.on('connection', (socket)=>{
+//     console.log("A new connetion established : ",socket.id);
+
+//     socket.on("recieve-msg", (msg)=>{
+//         console.log("message from client : ",msg);
+//     })
+// })
 
 // Setup CORS
 app.use(cors());

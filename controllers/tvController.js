@@ -177,15 +177,14 @@ const userCtrl = {
                 device_description: '',
                 orgId: req.body.orgId
             })
-            await dataAdd.save();
+            let record = await dataAdd.save();
         
             console.log('originalUrl '+ req.originalUrl)
-            if(req.originalUrl == '/api/tv/register'){
-                return res.status(200).send({status: 200, message:'Record Added !!'})
-            }
+            if(req.originalUrl == '/api/tv/register')
+                return res.status(200).send({status: 200, message:'Record Added !!', record: record})
         }catch(error){
-        console.log("error : ",error);
-        return HandleError(error);
+            console.log("error : ",error);
+            return HandleError(error);
         } 
     }
 }
