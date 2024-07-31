@@ -10,4 +10,6 @@ router.post('/post/data/base',tvController.addTvData);
 
 router.post('/register', tvController.addTv);
 
+router.post('/onetvdata', tvController.getOneTVData);
+
 module.exports = router;

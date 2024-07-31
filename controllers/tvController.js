@@ -1,6 +1,7 @@
 const { HandleError } = require('../helpers/ErrorHandler');
 const tvModel = require('../models/tv');
 const moment = require('moment-timezone');
+require('dotenv').config();
 
 const userCtrl = {
     getAllTV: async(req, res) => {
@@ -69,7 +70,6 @@ const userCtrl = {
 
     getAllTVData: async(req, res) => {
         try{
-            let fullUrl="http://192.168.18.116:5001/uploads/";
             let filter = {};
             if(req.query != null && req.query != undefined){
                 for(let key in req.query){
@@ -79,7 +79,7 @@ const userCtrl = {
 
             const data = await tvModel.find(filter).populate({path:"data.created_by", select:"name"});
             if(data && data.length > 0)
-                return res.status(200).json({status: 200, message: "Record Fetched", baseUrl: fullUrl, data});
+                return res.status(200).json({status: 200, message: "Record Fetched", baseUrl: `${process.env.FILE_BASE_URL}/uploads/`, data});
             else
                 return res.status(200).json({status: 400, message: "Record Not Fetched"});
         }catch(error){
@@ -90,45 +90,26 @@ const userCtrl = {
 
     getOneTVData: async(req, res) => {
         try{
-            let fullUrl="http://192.168.18.116:5001";
 
-            if(req.body.device_id != undefined && req.body.device_id != null && String(req.body.device_id).length > 0){
-                const getTv = await tvModel.findOne({device_id:req.body.device_id});
-                console.log('getTv : ',getTv)
-                if(!getTv){
+            let mandatoryFields = [];
+            if(!req.body.device_id) mandatoryFields.push("device_id");
+            if(!req.body.orgId) mandatoryFields.push("orgId");
 
-                    const dataAdd= await new tvModel({
-                        device_name:req.body.device_name ? req.body.device_name : 'New TV',
-                        device_description: '',
-                        data: [],
-                        device_id:req.body.device_id
-                    }).save();
-                    console.log('result tv dataAdd : ', dataAdd)
-                    res.json({status:200,data:{fileType:'Not Exists'}})
-                    return;
-                }else{
+            if(mandatoryFields.length > 0)
+                return res.status(200).json({status: 400, message: "mandatory fields missing", fields: mandatoryFields})
 
-                    if(getTv.data.length>0){
-                        
-                        let allData={
-                            fileType:getTv.data[0].file_type,
-                            fileUrlList:[]
-                        }
-
-                        for(let d of getTv.data){
-                            allData.fileUrlList.push(fullUrl+"/uploads/"+d.file_url)
-                        }
-                    res.json({status:200,data:allData})
-
-                    }else{
-                        res.json({status:200,data:{}, message:"Data not found !!"})
-                    }
-                    
-
+            const getTv = await tvModel.findOne({orgId: req.body.orgId, device_id:req.body.device_id});
+            console.log('getTv : ',getTv)
+            if(getTv){
+                let allData={
+                    fileType:getTv.data[0].file_type,
+                    fileUrlList:[]
                 }
-                
-            }else{
-                return res.status(200).send({status: 400, message: 'Device id is required'});
+
+                for(let d of getTv.data){
+                    allData.fileUrlList.push(process.env.FILE_BASE_URL+"/uploads/"+d.file_url)
+                }
+                res.json({status:200,data:allData})  
             }
         }catch(error){
             console.log("error : ",error);
@@ -149,11 +130,11 @@ const userCtrl = {
                     updated_by: req.body.created_by,
                     file_url: req.file.filename,
                 }];
-                const addData = await tvModel.updateMany({device_id: {$in: deviceId}}, {data: arr});
+                const addData = await tvModel.updateMany({orgId: req.body.orgId, device_id: {$in: deviceId}}, {data: arr});
                 if(addData)
-                    return res.status(200).json({status: 200, mesage:'Record Added !!'})
+                    return res.status(200).json({status: 200, message:'Record Added !!'})
                 else
-                    return res.status(200).json({status: 400, mesage:'Something Wrong'})
+                    return res.status(200).json({status: 400, message:'Something Wrong'})
                 
             }else if(req.originalUrl != '/api/tv/post/data'){
                 console.log('req.body : ',req.body);
@@ -182,6 +163,14 @@ const userCtrl = {
 
     addTv: async(req, res) => {
         try{
+            let mandatoryFields = [];
+            if(!req.body.device_id) mandatoryFields.push("device_id");
+            if(!req.body.device_name) mandatoryFields.push("device_name");
+            if(!req.body.orgId) mandatoryFields.push("orgId");
+
+            if(mandatoryFields.length > 0)
+                return res.status(200).json({status: 400, message: "Mandatory fields", fields: mandatoryFields});
+
             const dataAdd= new tvModel({
                 device_name: req.body.device_name,
                 device_id:req.body.device_id,
