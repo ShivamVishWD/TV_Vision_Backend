@@ -27,6 +27,20 @@ const helper = {
                 }
             }
         } while (true); // Loop until a unique random number is generated
+    },
+
+    dateTimeRandom: () => {
+        const date = new Date();
+
+        const year = String(date.getFullYear());
+        const month = String(Number(date.getMonth())+1);
+        const todayDt = String(date.getDate());
+        const hour = String(date.getHours());
+        const minute = String(date.getMinutes());
+        const second = String(date.getSeconds());
+
+        const random = `${year}${month}${todayDt}_${hour}${minute}${second}`;
+        return random;
     }
 }
 

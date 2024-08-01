@@ -29,7 +29,7 @@ const schema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         default: null,
-        ref: "organisation"
+        ref: "Organisation"
     },
     isActive: {
         type: Boolean,

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const tvController = require('../controllers/tvController');
+const upload = require('../middlewares/fileuploader');
 
 router.get('/', tvController.getAllTV);
 
-router.post('/post/data',tvController.addTvData);
+router.post('/post/data', upload.single("data"), tvController.addTvData);
 
 router.post('/post/data/base',tvController.addTvData);
 

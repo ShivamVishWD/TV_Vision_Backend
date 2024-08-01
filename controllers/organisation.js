@@ -7,6 +7,7 @@ const collectionFields = {
     name: "orgName",
     code: "orgCode",
     username: "orgUsername",
+    default: "defaultData",
     password: "orgPassword",
     active: "isActive",
     delete: "isDelete"
@@ -32,7 +33,6 @@ const orgCtrl = {
                 filterObj = { ...filterObj, isActive: true, isDelete: false }
             
             const result = await orgModal.find(filterObj);
-
             return res.status(200).json({status: 200, message: 'Records Fetched', data: result});
         }catch(error){
             console.log('error : ',error)
@@ -106,7 +106,55 @@ const orgCtrl = {
             console.log('error : ',error);
             return HandleError(error);
         }
-    }
+    },
+
+    updateDefaultData: async(req, res) => {
+        try{
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const baseUrl = `${protocol}://${host}`;
+            const fullUrl = `${baseUrl}/uploads/`;
+            if(req.originalUrl == '/api/organisation/default/data'){
+                console.log('req.body : ',req.body);
+                console.log('req.file ', req.file)
+                let arr = [{
+                    file_type: req.body.type,
+                    created_by: req.body.created_by,
+                    updated_by: req.body.created_by,
+                    file_url: fullUrl + req.file.filename,
+                }];
+                const addData = await orgModal.findOneAndUpdate({_id: req.body.orgId}, {defaultData: arr}, {new: true});
+                if(addData.modifiedCount > 0){
+                    // const event = req.app.get("event-emitter");
+                    // event.emit("refresh-images", req.body.orgId);
+                    return res.status(200).json({status: 200, message:'Record Added !!'})
+                }else
+                    return res.status(200).json({status: 400, message:'Something Wrong'})
+                
+            }else if(req.originalUrl == '/api/organisation/default/data/base'){
+                console.log('req.body : ',req.body);
+                let arr = [];
+                for(let item of req.body.data_list){
+                    let obj = {};
+                    obj['file_type'] = req.body.type;
+                    obj['created_by'] = req.body.created_by;
+                    obj['updated_by'] = req.body.created_by;
+                    const base64Data = String(item.base64).replace(/^data:image\/png;base64,/, "");
+                    const name = Date.now()+'-'+item.file_name;
+                    require("fs").writeFile("./public/uploads/"+name, base64Data, 'base64', function(err) {
+                    console.log(err);
+                    });
+                    obj['file_url'] = fullUrl + name;
+                    arr.push(obj);
+                }
+                await orgModal.findOneAndUpdate({_id: req.body.orgId}, {defaultData: arr}, {new: true});
+                return res.status(200).json({status: 200, mesage:'Record Added !!'});        
+            }
+        }catch(error){
+            console.log("error : ",error);
+            return HandleError(error);
+        }
+    },
 }
 
 function generateUniqueCode(orgObject) {

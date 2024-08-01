@@ -25,6 +25,36 @@ const schema = new Schema({
         required: true,
         default: null
     },
+    defaultData: [
+        {
+            type:new Schema({
+             file_type:{
+                 type:String,
+                 required:true
+             },
+             file_url:{
+                 type:String,
+                 required:true
+             },
+             created_by: {
+                 type: mongoose.Schema.Types.ObjectId,
+                 ref: 'ContollerUser',
+             },
+             updated_by: {
+                 type: mongoose.Schema.Types.ObjectId,
+                 ref: 'ContollerUser',
+             },
+             isActive:{
+                 type:String,
+                 required: true,
+                 default:'active',
+             }
+            },{
+                 timestamps: true
+            })
+             
+        }
+    ],
     isActive: {
         type: Boolean,
         required: true,
@@ -41,4 +71,4 @@ const schema = new Schema({
 });
 
 
-module.exports = mongoose.model('organisation', schema, 'organisation');
+module.exports = mongoose.model('Organisation', schema, 'Organisation');

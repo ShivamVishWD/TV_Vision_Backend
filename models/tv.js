@@ -11,8 +11,7 @@ const schema = new Schema({
     },
     device_id: {
         type:String,
-        required: true,
-        unique:true
+        required: true
     },
     device_description: {
         type: String,
@@ -61,7 +60,7 @@ const schema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         default: null,
-        ref: 'organisation'
+        ref: 'Organisation'
     }
     
 },{
@@ -69,4 +68,4 @@ const schema = new Schema({
 });
 
 
-module.exports = mongoose.model('tv', schema, 'tv');
+module.exports = mongoose.model('TV', schema, 'TV');

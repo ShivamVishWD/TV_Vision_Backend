@@ -1,3 +1,4 @@
+const helper = require('../helpers/Common');
 const { HandleError } = require('../helpers/ErrorHandler');
 const userCtrlModal = require("../models/controllerUser");
 const moment = require('moment-timezone');
@@ -8,7 +9,7 @@ const collectionFields = {
     email: "ctrlEmail",
     username: "ctrlUsername",
     password: "ctrlPassword",
-    org: "orgId",
+    orgId: "orgId",
     active: "isActive",
     delete: "isDelete"
 }
@@ -40,6 +41,7 @@ const userCtrl = {
             if(!req.body.name) mandatoryFields.push('name');
             if(!req.body.email) mandatoryFields.push('email');
             if(!req.body.password) mandatoryFields.push('password');
+            if(!req.body.orgId) mandatoryFields.push('orgId');
             
             if(mandatoryFields.length > 0)
                 return res.status(200).json({status: 400, message: 'Mandatory Fields Error', fields: mandatoryFields});
@@ -52,10 +54,11 @@ const userCtrl = {
             for(let key in req.body){
                 body[collectionFields[key]] = req.body[key];
             }
+            body[collectionFields['username']] = String(req.body.name).toUpperCase().split(" ")[0]+"_"+helper.dateTimeRandom();
 
             const insertUser = await new userCtrlModal(body).save();
             if(insertUser)
-                return res.status(200).json({status: 200, message: "User Saved", recordId: insertUser.id});
+                return res.status(200).json({status: 200, message: "User Saved", recordId: insertUser});
             else
                 return res.status(400).json({status: 400, message: "Something went wrong"});
         }catch(error){
@@ -66,7 +69,21 @@ const userCtrl = {
 
     update: async(req, res) => {
         try{
-            
+            let filterObj = {}
+            if(req.query && Object.keys(req.query).length > 0){
+                for(let key in req.query)
+                    filterObj[collectionFields[key]]= req.query[key]
+            }
+
+            let body = {}
+            if(req.body && Object.keys(req.body).length > 0){
+                for(let key in req.body)
+                    body[collectionFields[key]]= req.body[key]
+            }
+
+            const result = await userCtrlModal.findOneAndUpdate(filterObj, body, {new: true});
+
+            return res.status(200).json({status: 200, message: 'Records Fetched', data: result});
         }catch(error){
             console.log('error : ',error);
             return HandleError(error);
