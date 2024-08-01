@@ -140,12 +140,11 @@ const userCtrl = {
                 }];
                 const addData = await tvModel.updateMany({orgId: req.body.orgId, device_id: {$in: deviceId}}, {data: arr}, {new: true});
                 if(addData.modifiedCount > 0){
-                    // const event = req.app.get("event-emitter");
-                    // event.emit("refresh-images", req.body.orgId);
+                    const event = req.app.get("event-emitter");
+                    event.emit("refresh-images", req.body.orgId);
                     return res.status(200).json({status: 200, message:'Record Added !!'})
                 }else
                     return res.status(200).json({status: 400, message:'Something Wrong'})
-                
             }else if(req.originalUrl == '/api/tv/post/data/base'){
                 console.log('req.body : ',req.body);
                 let arr = [];
@@ -162,8 +161,13 @@ const userCtrl = {
                     obj['file_url'] = fullUrl+name;
                     arr.push(obj);
                 }
-                await tvModel.updateMany({device_id: {$in: req.body.device_list}}, {data: arr})
-                return res.status(200).json({status: 200, mesage:'Record Added !!'});        
+                const addData = await tvModel.updateMany({device_id: {$in: req.body.device_list}}, {data: arr})
+                if(addData.modifiedCount > 0){
+                    const event = req.app.get("event-emitter");
+                    event.emit("refresh-images", req.body.orgId);
+                    return res.status(200).json({status: 200, message:'Record Added !!'})
+                }else
+                    return res.status(200).json({status: 400, message:'Something Wrong'})
             }
         }catch(error){
             console.log("error : ",error);
