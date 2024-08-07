@@ -63,7 +63,7 @@ const orgCtrl = {
 
             const insertOrg = await new orgModal(body).save();
             if(insertOrg)
-                return res.status(200).json({status: 200, message: "Organisation Saved", recordId: insertOrg.id});
+                return res.status(200).json({status: 200, message: "Organisation Saved", recordId: insertOrg.id, record: insertOrg});
             else
                 return res.status(400).json({status: 400, message: "Something went wrong"});
         }catch(error){
@@ -100,7 +100,7 @@ const orgCtrl = {
 
             const getOrg = await orgModal.findOne(filterObj).exec();
             if(getOrg)
-                return res.status(200).json({status: 200, message: "Record Fetched", data: getOrg })
+                return res.status(200).json({status: 200, message: "Record Fetched", recordId: getOrg._id, data: getOrg})
 
         }catch(error){
             console.log('error : ',error);

@@ -5,6 +5,8 @@ const upload = require('../middlewares/fileuploader');
 
 router.get('/', tvController.getAllTV);
 
+router.put('/single/update', tvController.updateSingleTv);
+
 router.post('/post/data', upload.single("data"), tvController.addTvData);
 
 router.post('/post/data/base',tvController.addTvData);

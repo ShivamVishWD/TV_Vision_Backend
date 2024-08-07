@@ -1,14 +1,16 @@
 const jwt = require('jsonwebtoken');
 require('dotenv/config');
-const { HandleError } = require('../helper/ErrorHandler');
+const { HandleError } = require('../helpers/ErrorHandler');
 
 const token = {
 
     generateToken: async(data) => {
         try{
+            console.log(data, 'token data')
             const token = jwt.sign(
-                data, process.env.JWT_TOKEN, { expiresIn: "1d" }
+                data, process.env.JWT_TOKEN_KEY
             )
+            console.log(token, 'token')
             return { status: 200, message: 'Token Genrated', token };
         }catch(error){
             return HandleError(error)

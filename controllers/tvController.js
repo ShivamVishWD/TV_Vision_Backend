@@ -6,6 +6,16 @@ require('dotenv').config();
 const userCtrl = {
     getAllTV: async(req, res) => {
         try{
+
+            if(Object.keys(req.query).length < 1)
+                return res.status(200).json({status: 400, message: "need a orgId to get TV list"});
+
+            let mandatoryFilter = [];
+            if(!req.query.orgId) mandatoryFilter.push("orgId");
+
+            if(mandatoryFilter.length > 0)
+                return res.status(200).json({status: 400, message: "Mandatory query missing for update", queries: mandatoryFilter});
+
             let filter = {};
             if(req.query != null && req.query != undefined){
                 for(let key in req.query){
@@ -15,24 +25,8 @@ const userCtrl = {
             console.log(filter, 'filter')
             const data = await tvModel.find(filter).exec();
             
-            let allData=[];
-
-            for(let d of data){
-                const cname = (d.created_by == undefined)?'':d.created_by.name;
-                allData.push({
-                    device_id:d.device_id,
-                    device_name:d.device_name,
-                    device_description:d.device_description,
-                    orgId: d.orgId,
-                    created_by:cname
-                })
-            }
-
-            if(allData.length > 0){
-                const event = req.app.get("event-emitter");
-                event.emit("refresh-images", req.query.orgId);
-                return res.status(200).json({status: 200, message: "Record fetched", data: allData});
-            }
+            if(data.length > 0)
+                return res.status(200).json({status: 200, message: "Record fetched", data});
             else
                 return res.status(200).json({status: 400, message: "No Record Found"});
         }catch(error){
@@ -41,8 +35,21 @@ const userCtrl = {
         }
     },
 
-    updateTv: async(req, res) => {
+    updateSingleTv: async(req, res) => {
         try{
+
+            if(Object.keys(req.query).length < 1)
+                return res.status(200).json({status: 400, message: "send some filter as a query to update tv data"});
+
+            if(Object.keys(req.body).length < 1)
+                return res.status(200).json({status: 400, message: "Request body cannot be empty"});
+
+            let mandatoryFilter = [];
+            if(!req.query.orgId) mandatoryFilter.push("orgId");
+            if(!req.query.device_id) mandatoryFilter.push("device_id");
+
+            if(mandatoryFilter.length > 0)
+                return res.status(200).json({status: 400, message: "Mandatory query missing for update", queries: mandatoryFilter});
 
             let filter = {};
             if(req.query != null && req.query != undefined){
@@ -58,9 +65,8 @@ const userCtrl = {
                 }
             }
 
-            const updateObj = await tvModel.findByIdAndUpdate(filter, body, {new: true}).exec();
-
-            if(updateObj)
+            const updateObj = await tvModel.findOneAndUpdate(filter, body, {new: true}).exec();
+            if(updateObj._id)
                 return res.status(200).json({status: 200, message: "Record updated"});
             else
                 return res.status(200).json({status: 400, message: "Record not update"});
@@ -103,17 +109,17 @@ const userCtrl = {
                 return res.status(200).json({status: 400, message: "mandatory fields missing", fields: mandatoryFields})
 
             const getTv = await tvModel.findOne({orgId: req.body.orgId, device_id:req.body.device_id});
-            console.log('getTv : ',getTv)
+            // console.log('getTv : ',getTv)
             if(getTv){
                 let allData={
-                    fileType:getTv.data[0].file_type,
+                    fileType:getTv.data.length>0 && getTv.data[0].file_type,
                     fileUrlList:[]
                 }
 
                 for(let d of getTv.data){
                     allData.fileUrlList.push(process.env.FILE_BASE_URL+"/uploads/"+d.file_url)
                 }
-                res.json({status:200,data:allData})  
+                return res.status(200).json({status:200,data:allData})  
             }
         }catch(error){
             console.log("error : ",error);
@@ -140,8 +146,8 @@ const userCtrl = {
                 }];
                 const addData = await tvModel.updateMany({orgId: req.body.orgId, device_id: {$in: deviceId}}, {data: arr}, {new: true});
                 if(addData.modifiedCount > 0){
-                    const event = req.app.get("event-emitter");
-                    event.emit("refresh-images", req.body.orgId);
+                    // const event = req.app.get("event-emitter");
+                    // event.emit("refresh-images", req.body.orgId);
                     return res.status(200).json({status: 200, message:'Record Added !!'})
                 }else
                     return res.status(200).json({status: 400, message:'Something Wrong'})
@@ -163,8 +169,8 @@ const userCtrl = {
                 }
                 const addData = await tvModel.updateMany({device_id: {$in: req.body.device_list}}, {data: arr})
                 if(addData.modifiedCount > 0){
-                    const event = req.app.get("event-emitter");
-                    event.emit("refresh-images", req.body.orgId);
+                    // const event = req.app.get("event-emitter");
+                    // event.emit("refresh-images", req.body.orgId);
                     return res.status(200).json({status: 200, message:'Record Added !!'})
                 }else
                     return res.status(200).json({status: 400, message:'Something Wrong'})

@@ -3,10 +3,10 @@ const http = require('http');
 const express = require('express');
 const app = express();
 
-const server = http.createServer(app);
-const {Server} = require('socket.io');
-const io = new Server(server, {cors: { origin: "*" }});
-const EventEmitter = require('events');
+// const server = http.createServer(app);
+// const {Server} = require('socket.io');
+// const io = new Server(server, {cors: { origin: "*" }});
+// const EventEmitter = require('events');
 
 const path = require('path');
 const cors = require('cors');
@@ -27,10 +27,10 @@ app.use((req, res, next) => {
     next();
 });
 
-const eventEmitter = new EventEmitter();
-app.set("event-emitter", eventEmitter);
+// const eventEmitter = new EventEmitter();
+// app.set("event-emitter", eventEmitter);
 
-
+/*
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     // Perform your authentication check here
@@ -66,6 +66,7 @@ function isValidToken(token) {
     // Replace this with your actual authentication logic
     return token === process.env.SOCKET_AUTH_TOKEN;
 }
+    */
 
 app.use(session({
     secret : 'secret',
@@ -93,6 +94,6 @@ app.use('*', async (req, res)=>{
     res.status(200).send({status:400, message:'URL does not exists !!'})
 })
 
-server.listen(port, () =>{
+app.listen(port, () =>{
     console.log(`Server started at port ${port}`);
 })

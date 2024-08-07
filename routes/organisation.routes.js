@@ -11,6 +11,6 @@ router.post('/login', orgController.login);
 
 router.post('/default/data', upload.single("data"), orgController.updateDefaultData);
 
-router.post('/default/data/base',orgController.updateDefaultData);
+router.post('/default/data/base', orgController.updateDefaultData);
 
 module.exports = router;
