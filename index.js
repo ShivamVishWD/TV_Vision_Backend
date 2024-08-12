@@ -2,7 +2,7 @@ require('dotenv').config();
 const http = require('http');
 const express = require('express');
 const app = express();
-
+require('./configs/mongodb');
 // const server = http.createServer(app);
 // const {Server} = require('socket.io');
 // const io = new Server(server, {cors: { origin: "*" }});
@@ -11,7 +11,8 @@ const app = express();
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
-require('./configs/mongodb');
+
+// require('./services/CronJob');
 
 const port = process.env.PORT || 5001;
 

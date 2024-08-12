@@ -1,5 +1,7 @@
 const { HandleError } = require('../helpers/ErrorHandler');
 const tvModel = require('../models/tv');
+const scheduleDataModel = require('../models/scheduledData');
+const S3Bucket = require('../services/S3Bucket');
 const moment = require('moment-timezone');
 require('dotenv').config();
 
@@ -135,6 +137,91 @@ const userCtrl = {
             const fullUrl = `${baseUrl}/uploads/`;
             if(req.originalUrl == '/api/tv/post/data'){
                 console.log('req.body : ',req.body);
+                console.log('req.file ', req.files);
+
+                let arr = [];
+                if(req.files.length > 0){
+                    for(let file of req.files){
+                        const uploadRes = await S3Bucket.uploadFile(file);
+                        let fileUrl = "";
+                        if(uploadRes.status == 200){
+                            fileUrl = uploadRes.path;
+                            require("fs").unlink(file.path, (err)=>{
+                                if(!err){console.log('File deleted successfully!')}
+                            });
+                        }else
+                            fileUrl = fullUrl+file.filename;
+
+                        arr.push({
+                            file_type: req.body.type,
+                            created_by: req.body.created_by,
+                            updated_by: req.body.created_by,
+                            file_url: fileUrl,
+                        })
+
+                    }
+                }
+
+                let deviceId = String(req.body.device_list).includes(";") ? String(req.body.device_list).split(';') : [req.body.device_list];
+                console.log('device Ids : ', deviceId)
+                console.log(arr, 'arr')
+                const addData = await tvModel.updateMany({orgId: req.body.orgId, device_id: {$in: deviceId}}, {data: arr}, {new: true});
+                if(addData.modifiedCount > 0){
+                    // const event = req.app.get("event-emitter");
+                    // event.emit("refresh-images", req.body.orgId);
+                    return res.status(200).json({status: 200, message:'Record Added !!'})
+                }else
+                    return res.status(200).json({status: 400, message:'Something Wrong'})
+            }
+            /*
+            else if(req.originalUrl == '/api/tv/post/data/base'){
+                console.log('req.body : ',req.body);
+                let arr = [];
+                for(let item of req.body.data_list){
+                    let obj = {};
+                    obj['file_type'] = req.body.type;
+                    obj['created_by'] = req.body.created_by;
+                    obj['updated_by'] = req.body.created_by;
+                    const base64Data = String(item.base64).replace(/^data:image\/png;base64,/, "");
+                    const uploadRes = await S3Bucket.uploadFile(base64Data);
+                    console.log(uploadRes, 'upload response');
+                    
+                    let fileUrl = "";
+                    if(uploadRes.status == 200)
+                        fileUrl = uploadRes.path
+                    else
+                        fileUrl = fullUrl+req.file.filename
+                    return;
+                    const name = Date.now()+'-'+item.file_name;
+                    require("fs").writeFile("./public/uploads/"+name, base64Data, 'base64', function(err) {
+                    console.log(err);
+                    });
+                    obj['file_url'] = fullUrl+name;
+                    arr.push(obj);
+                }
+                const addData = await tvModel.updateMany({device_id: {$in: req.body.device_list}}, {data: arr})
+                if(addData.modifiedCount > 0){
+                    // const event = req.app.get("event-emitter");
+                    // event.emit("refresh-images", req.body.orgId);
+                    return res.status(200).json({status: 200, message:'Record Added !!'})
+                }else
+                    return res.status(200).json({status: 400, message:'Something Wrong'})
+            }
+            */
+        }catch(error){
+            console.log("error : ",error);
+            return HandleError(error);
+        }
+    },
+
+    scheduleData: async(req, res) => {
+        try{
+            const protocol = req.protocol;
+            const host = req.get('host');
+            const baseUrl = `${protocol}://${host}`;
+            const fullUrl = `${baseUrl}/uploads/`;
+            if(req.originalUrl == '/api/tv/schedule/post/data'){
+                console.log('req.body : ',req.body);
                 console.log('req.file ', req.file)
                 let deviceId = String(req.body.device_list).includes(";") ? String(req.body.device_list).split(';') : [req.body.device_list];
                 console.log('device Ids : ', deviceId)
@@ -144,14 +231,14 @@ const userCtrl = {
                     updated_by: req.body.created_by,
                     file_url: fullUrl+req.file.filename,
                 }];
-                const addData = await tvModel.updateMany({orgId: req.body.orgId, device_id: {$in: deviceId}}, {data: arr}, {new: true});
+                const addData = await new scheduleData({});
                 if(addData.modifiedCount > 0){
                     // const event = req.app.get("event-emitter");
                     // event.emit("refresh-images", req.body.orgId);
                     return res.status(200).json({status: 200, message:'Record Added !!'})
                 }else
                     return res.status(200).json({status: 400, message:'Something Wrong'})
-            }else if(req.originalUrl == '/api/tv/post/data/base'){
+            }else if(req.originalUrl == '/api/tv/schedule/post/data/base'){
                 console.log('req.body : ',req.body);
                 let arr = [];
                 for(let item of req.body.data_list){
